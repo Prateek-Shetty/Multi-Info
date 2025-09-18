@@ -1,41 +1,69 @@
-import dotenv from "dotenv";
-import mongoose from "mongoose";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import Together from "../models/Together.js";
+// services/summarize.js
 
-dotenv.config();
+import Together from "../models/togetherModel.js";
+import axios from "axios";
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", temperature: 0.7 });
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Make sure this is set in .env
 
-// Connect to MongoDB (if not connected in server.js)
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected in summarize.js"))
-  .catch(err => console.error("❌ MongoDB Error:", err.message));
-
-export const summarizeAndSave = async (data) => {
+// Function to summarize using Gemini API
+const generateSummary = async (sports, news, youtube, stock, weather) => {
   try {
     const prompt = `
-Create a concise daily digest summary from the following data:
-Sports: ${JSON.stringify(data.sports)}
-News: ${JSON.stringify(data.news)}
-YouTube: ${JSON.stringify(data.youtube)}
-Stock: ${JSON.stringify(data.stock)}
-Weather: ${JSON.stringify(data.weather)}
-Return a short human-readable summary.
-`;
+      Summarize the following data in a concise, readable format:
 
-    const summaryResponse = await model.generateContent(prompt);
-    const summaryText = summaryResponse.response.text();
+      Sports: ${sports}
+      News: ${JSON.stringify(news)}
+      YouTube: ${JSON.stringify(youtube)}
+      Stock: ${JSON.stringify(stock)}
+      Weather: ${JSON.stringify(weather)}
+    `;
 
-    // Save to MongoDB
-    const doc = new Together({ ...data, summary: summaryText });
+    const response = await axios.post(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      {
+        prompt,
+        maxOutputTokens: 300,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GEMINI_API_KEY}`,
+        },
+      }
+    );
+
+    // Adjust depending on response structure
+    return response.data?.candidates?.[0]?.content || "No summary generated";
+  } catch (err) {
+    console.error("❌ Error generating summary with Gemini:", err.message);
+    return "Summary generation failed";
+  }
+};
+
+// Function to summarize and save data
+export const summarizeData = async (data) => {
+  try {
+    const summary = await generateSummary(
+      data.sports,
+      data.news,
+      data.youtube,
+      data.stock,
+      data.weather
+    );
+
+    const doc = new Together({
+      sports: data.sports,
+      news: data.news,
+      youtube: data.youtube,
+      stock: data.stock,
+      weather: data.weather,
+      summary,
+    });
+
     await doc.save();
-
     return doc;
   } catch (err) {
-    console.error("❌ Error summarizing and saving:", err.message);
-    return { error: "Failed to summarize and save" };
+    console.error("❌ Error summarizing data:", err.message);
+    throw err;
   }
 };

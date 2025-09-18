@@ -1,48 +1,55 @@
-import React from "react";
-import Card from "./components/Card";
-import { useData } from "./hooks/useData";
+import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Summaries from "./pages/Summaries";
 
 function App() {
-  const { data, summary, loading, getLatestData, summarizeData } = useData();
-
   return (
-    <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center space-y-6">
-      <h1 className="text-3xl font-bold text-blue-600">AI Daily Digest</h1>
+    <Router>
+      {/* Navbar */}
+      <nav className="bg-gray-900 text-white shadow-md">
+        <div className="container mx-auto flex justify-between items-center px-6 py-3">
+          {/* Logo / App name */}
+          <h1 className="text-xl font-bold tracking-wide">Multi-Info</h1>
 
-      <div className="space-x-4">
-        <button
-          onClick={() => getLatestData(13.05, 77.72)}
-          className="px-6 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600 transition-colors"
-        >
-          Fetch Latest Data
-        </button>
-
-        <button
-          onClick={summarizeData}
-          className="px-6 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-600 transition-colors"
-        >
-          Summarize & Save
-        </button>
-      </div>
-
-      {loading && <div className="text-gray-500 animate-pulse">Loading...</div>}
-
-      {data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-6xl mt-4">
-          <Card title="Sports" content={data.sports} />
-          <Card title="News" content={data.news} />
-          <Card title="YouTube" content={data.youtube} />
-          <Card title="Stock" content={data.stock} />
-          <Card title="Weather" content={data.weather} />
+          {/* Links */}
+          <div className="flex gap-6">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                `px-3 py-2 rounded-md text-sm font-medium transition ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`
+              }
+            >
+              Dashboard
+            </NavLink>
+            <NavLink
+              to="/summaries"
+              className={({ isActive }) =>
+                `px-3 py-2 rounded-md text-sm font-medium transition ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`
+              }
+            >
+              Summaries
+            </NavLink>
+          </div>
         </div>
-      )}
+      </nav>
 
-      {summary && (
-        <div className="mt-6 p-4 bg-blue-100 rounded-lg shadow text-gray-800 max-w-3xl text-center">
-          <strong>Summary:</strong> {summary}
-        </div>
-      )}
-    </div>
+      {/* Page Content */}
+      <main className="min-h-screen bg-gray-50 p-6">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/summaries" element={<Summaries />} />
+        </Routes>
+      </main>
+    </Router>
   );
 }
 

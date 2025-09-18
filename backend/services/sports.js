@@ -13,8 +13,6 @@ export const fetchSportsNews = async () => {
   try {
     const prompt = `
 Generate 5 latest sports headlines and summaries. 
-Provide as plain text. No JSON parsing required. 
-You can include realistic or fictional sports news.
 `;
 
     const response = await model.generateContent(prompt);
